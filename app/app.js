@@ -1,3 +1,6 @@
+// (?<=[0-9]{2}),(?=[0-9]{2})
+// (?<=[0-9])"
+
 (function(){
 
 var $  = document.getElementById.bind(document);
@@ -25,11 +28,15 @@ App.fn.load = function(){
 
   if (value = localStorage.dob)
     this.dob = new Date(parseInt(value));
+    this.gender = localStorage.gender;
+    this.year = localStorage.year;
 };
 
 App.fn.save = function(){
   if (this.dob)
     localStorage.dob = this.dob.getTime();
+    localStorage.gender = this.gender;
+    localStorage.year = this.year;
 };
 
 App.fn.submit = function(e){
@@ -38,7 +45,17 @@ App.fn.submit = function(e){
   var input = this.$$('input')[0];
   if ( !input.valueAsDate ) return;
 
+  var genderElem = this.$$('select');
+  if (!genderElem[0]) return;
+
+  var gender = genderElem[0].value;
+
+  var year = new Date(input.value).getFullYear();
+  
+  this.gender = gender;
   this.dob = input.valueAsDate;
+  this.year = year;
+
   this.save();
   this.renderAgeLoop();
 };
@@ -51,12 +68,19 @@ App.fn.renderAgeLoop = function(){
   this.interval = setInterval(this.renderAge.bind(this), 100);
 };
 
+App.fn.getLifespan = function (yearofbirth, gender) {
+  return data.find(elm => elm.year == yearofbirth)[gender];
+}
+
 App.fn.renderAge = function(){
   var now       = new Date
   var duration  = now - this.dob;
-  var years     = duration / 31556900000;
 
-  var majorMinor = years.toFixed(9).toString().split('.');
+  var lifespan = this.getLifespan(this.year, this.gender);  
+  var years = duration / 31556900000;
+
+  var diff = lifespan - years;
+  var majorMinor = diff.toFixed(9).toString().split('.');
 
   requestAnimationFrame(function(){
     this.html(this.view('age')({
